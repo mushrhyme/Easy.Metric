@@ -15,5 +15,5 @@ EasyMetric은 통계 분석을 쉽고 직관적으로 수행할 수 있는 웹 �
     streamlit run app.py
 
 ### 서비스 URL
-<https://172.17.17.99.9999>
+[Easy.Metric](https://172.17.17.99:9999)
     - 사내 네트워크 환경에서만 접속 가능
