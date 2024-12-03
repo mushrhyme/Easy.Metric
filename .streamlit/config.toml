@@ -1,7 +1,0 @@
-[theme]
-base="light"
-
-[server]
-sslCertFile = '/Users/macpro2/Desktop/Minitab/certchain.pem'
-sslKeyFile = '/Users/macpro2/Desktop/Minitab/private.key'
-port = 9999
