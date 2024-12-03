@@ -1,0 +1,18 @@
+# Streamlit
+.streamlit/secrets.toml
+
+# Python
+__pycache__/
+.Python
+.env
+.venv
+env/
+venv/
+ENV/
+*.pyc
+
+# System file
+.DS_Store
+
+# Cache
+.cache/
