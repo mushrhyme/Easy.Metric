@@ -30,3 +30,6 @@ private.key
 ./error_logs
 questions.json
 visitor_logs.json
+error_logs/*
+*.log
+*.json
