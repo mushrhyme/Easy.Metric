@@ -25,3 +25,8 @@ ENV/
 *.key
 certchain.pem
 private.key
+
+# log
+./error_logs
+questions.json
+visitor_logs.json
