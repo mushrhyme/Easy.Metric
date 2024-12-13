@@ -15,12 +15,15 @@ import plotly.graph_objects as go
 def twoproportion_test_set():
     df = convert_to_calculatable_df()
     col = df.columns.tolist()
-    st.session_state.test_type = "비율 검정"
-    st.session_state.sample1 = st.selectbox(f"표본1", options=col, index=0)
-    st.session_state.sample2 = st.selectbox(f"표본2", options=col, index=1)
-    st.session_state.significance_level = 1 - st.number_input(f"신뢰수준", value=95.0, step=1.0) / 100.0
-    st.session_state.null_diff = st.number_input(f"귀무 가설에서의 차이", value=0.0, step=0.01)
-    st.session_state.alternative = st.selectbox(f"대립 가설", ["차이 < 귀무가설에서의 차이", "차이 ≠ 귀무가설에서의 차이", "차이 > 귀무가설에서의 차이"])
+    if len(col) < 2:
+        st.error("2개 이상의 열이 존재해야 합니다. 데이터를 확인해주세요.")
+    else:
+        st.session_state.test_type = "비율 검정"
+        st.session_state.sample1 = st.selectbox(f"표본1", options=col, index=0)
+        st.session_state.sample2 = st.selectbox(f"표본2", options=col, index=1)
+        st.session_state.significance_level = 1 - st.number_input(f"신뢰수준", value=95.0, step=1.0) / 100.0
+        st.session_state.null_diff = st.number_input(f"귀무 가설에서의 차이", value=0.0, step=0.01)
+        st.session_state.alternative = st.selectbox(f"대립 가설", ["차이 < 귀무가설에서의 차이", "차이 ≠ 귀무가설에서의 차이", "차이 > 귀무가설에서의 차이"])
 
 def twoproportion_test_cal(df):
     group_a = df[st.session_state.sample1]
