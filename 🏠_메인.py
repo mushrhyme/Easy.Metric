@@ -10,7 +10,7 @@ from utils.tools import (
     display_etc,
     display_quality_tool)
 from error_handler import main_with_error_handling
-
+from utils.tools.ip_tracker import *
 def initialize_session_state():
     default_session = {
         'id': '',
@@ -154,6 +154,7 @@ def main():
     # display to calcurate statistics content
     with section_set:
         display_content(tabs)
+    log_visitor()
 
 if __name__ == "__main__":
     main()
