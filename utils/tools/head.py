@@ -3,31 +3,32 @@ from st_on_hover_tabs import on_hover_tabs
 
 
 def apply_custom_css():
+    # 기존 버튼 스타일
     st.markdown("""
     <style>
-            div.stButton > button {
-                background-color: #000000;  /* 원하는 색상으로 변경 */
-                color: white;  /* 텍스트 색상 */
-            }
-            div.stButton > button:hover {
-                background-color: #FFFFFF;  /* 마우스 오버 시 색상 */
-                color: red;  /* 마우스 오버 시 텍스트 색상 */
-            }
-            div.stButton > button:active {
-                background-color: #000000;  /* 클릭 시 배경색: 라임 그린 */
-                color: white;  /* 클릭 시 텍스트 색상 */
-                transform: translateY(2px);  /* 클릭 시 버튼을 약간 아래로 이동 */
-            }
-        </style>
-        """, unsafe_allow_html=True)
-    
+        div.stButton > button {
+            background-color: #000000;
+            color: white;
+        }
+        div.stButton > button:hover {
+            background-color: #FFFFFF;
+            color: red;
+        }
+        div.stButton > button:active {
+            background-color: #000000;
+            color: white;
+            transform: translateY(2px);
+        }
+    </style>
+    """, unsafe_allow_html=True)
+
+    # 기존 앱 배경색 및 탭 스타일
     st.markdown("""
     <style>
         .stApp {
             background-color: #d8d8d8;
         }
-        
-    
+
         .stTabs [data-baseweb="tab-list"] {
             gap: 30px;
         }
@@ -40,24 +41,56 @@ def apply_custom_css():
             padding-top: 10px;
             padding-left: 0px;
             padding-bottom: 20px;
-            color: #666666;  /* 선택되지 않은 탭 글자의 기본 색상 (슬레이트 그레이) */
-            transition: all 0.5s ease;  /* 부드러운 전환 효과 */
+            color: #666666;
+            transition: all 0.5s ease;
         }
-        
+
         .stTabs [data-baseweb="tab"]:hover {
-        color: #CCFF99;  /* 호버 시 글자 색상 */
+            color: #CCFF99;
         }   
 
         .stTabs [aria-selected="true"] {
-            color: #FF4B4B;  /* 선택된 탭의 글자 색상 */
+            color: #FF4B4B;
+        }
+
+        /* 새로운 사이드바 스타일 */
+        .stSidebar {
+            background-color: #bfbfbf;
+            min-width: 200px;
+        }
+
+        .nav-tabs {
+            width: 100%;
+            padding: 0;
+            margin: 0;
+        }
+
+        .nav-tabs .nav-item {
+            width: 100%;
+            opacity: 1 !important;
+            transition: background-color 0.3s ease;
+        }
+
+        .nav-tabs .nav-item:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .nav-tabs .nav-item.active {
+            background-color: #FF4B4B;
+            color: white !important;
+        }
+
+        .nav-tabs .nav-item i {
+            opacity: 1 !important;
         }
     </style>
     """, unsafe_allow_html=True)
-    
-    
+
+    # 기존 style.css 파일 로드
     st.markdown('<style>' + open('./utils/style.css').read() + '</style>', unsafe_allow_html=True)
 
-    css_string = """
+    # 기존 컨테이너 패딩 스타일
+    st.markdown("""
     <style>
         .st-emotion-cache-1jicfl2 {
             width: 100%;
@@ -67,20 +100,16 @@ def apply_custom_css():
             padding-bottom: 10rem !important;
             min-width: auto;
             max-width: initial;
+
         }
     </style>
-    """
-    st.markdown(css_string, unsafe_allow_html=True)
-    
+    """, unsafe_allow_html=True)
+
+
 def create_sidebar():
     with st.sidebar:
         tabs = on_hover_tabs(
-            tabName=[
-                '기초통계', '회귀분석',
-                # '실험계획',
-                '품질도구',
-                # '기타',
-                ],
+            tabName=['기초통계', '회귀분석', '품질도구'],
             iconName=['dashboard', 'economy', 'archive'],
             default_choice=0,
             styles={
@@ -91,13 +120,17 @@ def create_sidebar():
                     'transition': '.3s',
                     'white-space': 'nowrap',
                     'padding-left': '0px',
-                    'text-transform': 'uppercase'
+                    'text-transform': 'uppercase',
+                    'width': '100%',
+                    'display': 'block'
                 },
                 'tabStyle': {
-                    ':hover :hover': {'color': 'red', 'cursor': 'pointer'},
                     'list-style-type': 'none',
                     'margin-bottom': '30px',
-                    'padding-left': '30px'
+                    'padding-left': '30px',
+                    'cursor': 'pointer',
+                    'display': 'block',
+                    'width': '100%',
                 },
                 'iconStyle': {
                     'position': 'fixed',
@@ -105,8 +138,12 @@ def create_sidebar():
                     'padding-right': '0px',
                     'text-align': 'right',
                 },
+                'containerStyle': {
+                    'display': 'block',
+                    'width': '100%',
+                    'padding': '10px 0',
+                    'background-color': '#bfbfbf'
+                }
             }
         )
-
     return tabs
-
