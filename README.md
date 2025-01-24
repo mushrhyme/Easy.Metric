@@ -13,7 +13,8 @@ EasyMetric은 통계 분석을 쉽고 직관적으로 수행할 수 있는 웹 �
 
 ## 사용 방법
 ### 서버 실행
-    streamlit run app.py
+    streamlit run 🏠_메인.py
+    streamlit run 🏠_메인.py --server.address 0.0.0.0 --server.enableCORS true --server.enableXsrfProtection false
 
 ### 웹 브라우저에서 접속
 [Easy.Metric](https://172.17.17.99:9999)
