@@ -122,5 +122,14 @@ def descriptive_statistics_run():
     # 매우 중요 : 데이터프레임 가져오기 ------------
     df = convert_to_calculatable_df()
     # --------------------------------------
-    descriptive_statistics_cal(df)
-    descriptive_statistics_plot(df)
+    try:
+        col_type = df[st.session_state.descriptive_statistics_col].dtype
+        if col_type == "object":
+            st.error(f"{st.session_state.descriptive_statistics_col}는 수치형 변수가 아닙니다. 수치형 변수만 선택해주세요.")
+        else:
+            descriptive_statistics_cal(df)
+            descriptive_statistics_plot(df)
+    except:
+        st.error(f"분석에 사용할 데이터가 없습니다. 올바른 변수를 선택해주세요.")
+
+

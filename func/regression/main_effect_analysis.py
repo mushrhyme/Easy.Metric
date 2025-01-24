@@ -22,7 +22,7 @@ def main_effect_analysis_set():
         predictor = df.columns.tolist()
         predictor.remove(st.session_state.target)
         st.session_state.predictor = st.multiselect("요인", predictor)
-    
+
         # 반응: 계량형 변수 확인
         if df[st.session_state.target].dtype=="object":
             st.error(f"{st.session_state.target}는 계량형 변수가 아닙니다. 계량형 변수만 선택해주세요.")
@@ -35,8 +35,9 @@ def main_effect_analysis_set():
                 st.error(f"{', '.join(non_categorical)}는 범주형 변수가 아닙니다. 범주형 변수만 선택해주세요.")
                 return
     with tab2:
-        max_col = np.max([len(df[x].unique()) for x in st.session_state.predictor])
-        color_set([f"색상{i}" for i in range(1, max_col+1)])
+        if len(st.session_state.predictor)>0:
+            max_col = np.max([len(df[x].unique()) for x in st.session_state.predictor])
+            color_set([f"색상{i}" for i in range(1, max_col+1)])
         
 def main_effect_analysis_cal(df):
     pass

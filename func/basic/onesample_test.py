@@ -18,7 +18,7 @@ def onesample_test_set():
     st.session_state.test_type = st.selectbox("방법", options=["t검정", "z검정"], index=0)
     if st.session_state.test_type =="z검정":
         st.session_state.pop_std = st.number_input("알려진 표준편차")
-    st.session_state.sample = st.selectbox(f"표본1",
+    st.session_state.sample1 = st.selectbox(f"표본1",
                                             options=col,
                                             index=0)
 
@@ -34,7 +34,7 @@ def onesample_test_set():
                                                 "평균 > 가설 평균"])
 
 def onesample_test_cal(df):
-    sample_data = df[st.session_state.sample]
+    sample_data = df[st.session_state.sample1]
     sample_data = sample_data.dropna()
 
     hypothesis_mean = float(st.session_state.avg)
@@ -155,7 +155,7 @@ def onesample_test_cal(df):
     })
 
     st.session_state.stats_df = pd.DataFrame({
-        '표본': [st.session_state.sample],
+        '표본': [st.session_state.sample1],
         '표본 크기': [sample_size],
         '표본 평균': [np.round(sample_mean, 3)],
         '표준 편차': [np.round(sample_std, 3)],
@@ -182,7 +182,7 @@ def onesample_test_cal(df):
 
 
 def onesample_test_plot(df):
-    colname = st.session_state.sample
+    colname = st.session_state.sample1
     sample_data = df[colname].dropna()
     hypothesis_mean = float(st.session_state.avg)
     
@@ -264,17 +264,24 @@ def onesample_test_plot(df):
 def onesample_test_run():  
     df = convert_to_calculatable_df()
     # --------------------------------------
-    onesample_test_cal(df)
-    st.divider()
-    st.write("**기술 통계량**")
-    st.data_editor(st.session_state.stats_df, hide_index=True, key="stats", use_container_width=True)
+    try:
+        col_type = df[st.session_state.sample1].dtype
+        if col_type == "object":
+            st.error(f"{st.session_state.sample1}는 수치형 변수가 아닙니다. 수치형 변수만 선택해주세요.")
+        else:
+            onesample_test_cal(df)
+            st.divider()
+            st.write("**기술 통계량**")
+            st.data_editor(st.session_state.stats_df, hide_index=True, key="stats", use_container_width=True)
 
-    c1, c2 = st.columns(2)
-    c1.write("**신뢰구간**")
-    c1.data_editor(st.session_state.diff_df, hide_index=True, key="diff", use_container_width=True)
-    c2.write("**검정**")
-    c2.data_editor(st.session_state.test_df, hide_index=True, key="test", use_container_width=True)
+            c1, c2 = st.columns(2)
+            c1.write("**신뢰구간**")
+            c1.data_editor(st.session_state.diff_df, hide_index=True, key="diff", use_container_width=True)
+            c2.write("**검정**")
+            c2.data_editor(st.session_state.test_df, hide_index=True, key="test", use_container_width=True)
 
-    with st.expander("결과 그래프", expanded=False):
-        # with st.container(border=True):
-        onesample_test_plot(df)
+            with st.expander("결과 그래프", expanded=False):
+                # with st.container(border=True):
+                onesample_test_plot(df)
+    except:
+        st.error(f"분석에 사용할 데이터가 없습니다. 올바른 변수를 선택해주세요.")

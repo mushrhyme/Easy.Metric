@@ -118,7 +118,7 @@ def twoproportion_test_plot(df):
 
 def twoproportion_test_run():  
     df = convert_to_calculatable_df()
-    proportion_test_cal(df)
+    twoproportion_test_cal(df)
     st.divider()
     st.write("**기술 통계량**")
     st.data_editor(st.session_state.stats_df, hide_index=True, key="stats", use_container_width=True)
