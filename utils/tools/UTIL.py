@@ -9,6 +9,7 @@ import base64
 import colorsys
 from io import BytesIO
 import plotly.io as pio
+import json
 from func.regression.response_optimizer import *
 
 
@@ -250,7 +251,6 @@ def upload_file():
         st.success("데이터가 성공적으로 업로드되었습니다.")
         st.rerun()
 
-
 @st.dialog(title='Login')
 def login():
     if st.session_state.id != '' and st.session_state.name != '':
@@ -269,17 +269,37 @@ def login():
                     st.rerun()
     else:
         with st.form(key='login_page'):
-            id = st.text_input('ID')
+            id_ = st.text_input('ID')
             name = st.text_input('name')
             submitted = st.form_submit_button('Submit')
-            if submitted:
-                st.session_state.id = id
-                st.session_state.name = name
-                folder = os.path.join(os.getcwd(), "DB", f"{st.session_state.id}({st.session_state.name})")
-                if not os.path.exists(folder):
-                    os.makedirs(folder)
-                st.rerun()
 
+            if submitted:
+                # 사용자 데이터베이스 로드
+                with open('users.json', 'r', encoding='utf-8') as f:
+                    users_db = json.load(f)
+
+                # 입력된 사용자 정보 확인
+                user_exists = False
+                for user in users_db.get('users', []):
+                    if user['id'] == id_ and user['name'] == name:
+                        user_exists = True
+                        break
+
+                if user_exists:
+                    st.session_state.id = id_
+                    st.session_state.name = name
+                    folder = os.path.join(os.getcwd(), "DB", f"{st.session_state.id}({st.session_state.name})")
+                    if not os.path.exists(folder):
+                        os.makedirs(folder)
+                    st.rerun()
+                else:
+                    st.error('미등록 사용자입니다. 관리자에게 문의해주세요.')
+
+def check_colname(colname, banned_word):
+    for word in banned_word:
+        if word in colname:
+            return True
+    return False
 
 def table():
     # 데이터 입력 데이터 및 분석 설정값 선언
@@ -293,7 +313,11 @@ def table():
             def change_col_name(i):
                 update_table()
                 col = st.session_state.df.columns.tolist()
-                col[i] = st.session_state[f'new_col_name_{i}']
+                banned_word = ["_", "-", ":", "*"]
+                if check_colname(st.session_state[f'new_col_name_{i}'], banned_word):
+                    st.error(f"컬럼명에 다음 문자({', '.join(banned_word)})를 사용할 수 없습니다.")
+                else:
+                    col[i] = st.session_state[f'new_col_name_{i}']
                 st.session_state.df.columns = col
 
             for i in range(len(st.session_state.col_name)):
