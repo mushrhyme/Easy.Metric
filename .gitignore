@@ -33,3 +33,4 @@ visitor_logs.json
 error_logs/*
 *.log
 *.json
+/notepad.py

@@ -1,53 +1,41 @@
 import os
-import glob
 import json
-
-def read_json_safely(file_path):
-    try:
-        # 방법 1: 기본 읽기
-        with open(file_path, 'r', encoding='utf-8') as f:
-            data = json.load(f)
-        return data
-    except json.JSONDecodeError as e:
-        print("첫 번째 시도 실패, 다른 방법 시도...")
-
-        try:
-            # 방법 2: BOM 제거
-            with open(file_path, 'r', encoding='utf-8-sig') as f:
-                data = json.load(f)
-            return data
-        except json.JSONDecodeError as e:
-            print("두 번째 시도 실패, 다른 방법 시도...")
-
-            try:
-                # 방법 3: 문자열로 읽은 후 공백 제거
-                with open(file_path, 'r', encoding='utf-8') as f:
-                    content = f.read().strip()
-                data = json.loads(content)
-                return data
-            except json.JSONDecodeError as e:
-                print("세 번째 시도 실패")
-                print(f"오류 위치: {e.pos}")
-                print(f"오류 라인: {e.lineno}")
-                print(f"오류 컬럼: {e.colno}")
-                print(f"오류 메시지: {str(e)}")
-
-                # 파일 내용 출력
-                with open(file_path, 'r', encoding='utf-8') as f:
-                    content = f.read()
-                print("\n파일 처음 500자:")
-                print(content[:500])
-                return None
+import re
 
 
-filelist = list(filter(lambda x: '20241129_1035' in x, glob.glob("./error_logs/*")))
-for filename in filelist:
-    print("="*100)
-    print(filename)
-    print("=" * 100)
-    result = read_json_safely(filename)
-    print(result["traceback"])
+def create_users_json():
+    # DB 폴더 경로
+    db_path = os.path.join(os.getcwd(), "DB")
+
+    # 사용자 정보를 저장할 리스트
+    users = []
+
+    # DB 폴더 내의 모든 폴더 검사
+    for folder in os.listdir(db_path):
+        # 정규표현식을 사용하여 폴더명에서 ID와 이름 추출
+        # 2024087(조유민) 형식의 폴더명에서 추출
+        match = re.match(r'(\d+)\(([^)]+)\)', folder)
+
+        if match:
+            user_id = match.group(1)  # ID (숫자 부분)
+            user_name = match.group(2)  # 이름 (괄호 안의 부분)
+
+            # 사용자 정보를 딕셔너리로 만들어 리스트에 추가
+            users.append({
+                "id": user_id,
+                "name": user_name
+            })
+
+    # JSON 형식으로 변환
+    users_data = {"users": users}
+
+    # JSON 파일 생성
+    with open('users.json', 'w', encoding='utf-8') as f:
+        json.dump(users_data, f, ensure_ascii=False, indent=4)
+
+    print(f"users.json 파일이 생성되었습니다. 총 {len(users)}명의 사용자가 등록되었습니다.")
 
 
-
-
+# 함수 실행
+if __name__ == "__main__":
+    create_users_json()

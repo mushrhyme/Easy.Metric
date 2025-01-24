@@ -39,6 +39,7 @@ def initialize_session_state():
         "diff_df": pd.DataFrame(),
         "test_df": pd.DataFrame(),
         "significance_level": 0.05,
+        "confidence_level": 95,
         "null_diff": 0.0,
         "alternative": "",
         "equal_var": False,
@@ -137,7 +138,28 @@ def main():
     apply_custom_css()
 
     #draw banner img
-    st.image('utils/image/banner.png', width=950)
+    # st.image('utils/image/banner.png', width=950)
+    # create columns for banner and text
+    col1, col2 = st.columns([3, 1])  # 2:1 비율로 공간 분할
+
+    # 첫 번째 컬럼에 이미지
+    with col1:
+        st.image('utils/image/banner.png', width=950)
+
+    # 두 번째 컬럼에 텍스트
+    with col2:
+        st.markdown("""
+        <div style="background-color: #f8f9fa; 
+                    padding: 12px; 
+                    border-radius: 8px; 
+                    border-left: 5px solid #cc0000;
+                    margin-top: 15px;
+                    margin-bottom: 30px;
+                    font-size: 0.9em;"> 
+            <h4 style="color: #cc0000; margin-top: 0;font-size: 1.3em;">📋 Contact Information</h4>
+            <p style="margin-bottom: 3px; font-size: 1em;"><strong>[농심 DT추진팀] 조유민 주임 (7108)</strong></p>
+        </div>
+        """, unsafe_allow_html=True)
 
     # initialize session state
     initialize_session_state()
