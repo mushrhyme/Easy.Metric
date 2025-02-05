@@ -45,6 +45,9 @@ def process_capability_analysis_set():
     tab1, tab2 = st.tabs(["분석", "그래프"])
     with tab1:
         st.session_state.uniq_col = st.selectbox("단일 열", df.columns.tolist())
+        if df[st.session_state.uniq_col].dtype=="object":
+            st.error(f"{st.session_state.uniq_col}는 계량형 변수가 아닙니다. 계량형 변수만 선택해주세요.")
+            return
         st.session_state.subgroup_size = st.number_input("부분군 크기", value=1)
         st.session_state.lsl = st.number_input("규격 하한", value=None)
         st.session_state.usl = st.number_input("규격 상한", value=None)
