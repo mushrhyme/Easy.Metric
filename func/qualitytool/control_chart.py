@@ -184,7 +184,7 @@ def xbar_s_plot(df):
     subgroup_size = st.session_state.subgroup_size
     predictors = st.session_state.predictor
     
-    _, const = get_control_chart_constants()
+    _, const = get_control_chart_constants(subgroup_size)
     
     # 각 변수별로 차트 생성
     for predictor in predictors:
@@ -430,14 +430,16 @@ def control_chart_set():
 def control_chart_cal(df):
     pass
 
-
 def control_chart_plot(df):
-    if st.session_state.option=="Xbar-R":
-        xbar_r_plot(df)
-    elif st.session_state.option=="Xbar-S":
-        xbar_s_plot(df)
-    elif st.session_state.option=="I-MR":
-        imr_plot(df)
+    if st.session_state.subgroup_size < 2:
+        st.error("부분군 크기는 2 이상이어야 합니다.")
+    else:
+        if st.session_state.option=="Xbar-R":
+            xbar_r_plot(df)
+        elif st.session_state.option=="Xbar-S":
+            xbar_s_plot(df)
+        elif st.session_state.option=="I-MR":
+            imr_plot(df)
         
 def control_chart_run():  
     df = convert_to_calculatable_df()
