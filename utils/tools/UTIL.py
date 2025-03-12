@@ -178,7 +178,7 @@ def cal(anlysis, plot, run):
         st.caption("분석하고 싶은 컬럼의 이름을 기본값이 아닌 다른 이름으로 변경해주세요.")
     else:
         run()
-        if anlysis.__name__ == "regression_analysis_cal":
+        if anlysis.__name__ == "regression_analysis_cal" and len(st.session_state.predictor)!=0:
             with st.expander("반응 최적화 도구", expanded=False):
                 response_optimizer_run(df)
 
@@ -327,12 +327,16 @@ def table():
                               on_change=change_col_name,
                               args=(i,))
         with tbcol2:
-            st.data_editor(st.session_state.df,
-                           num_rows='dynamic',
-                           hide_index=True,
-                           use_container_width=True,
-                           height=667,
-                           key=f'change_df_data')
+            duplicated_columns = st.session_state.df.columns[st.session_state.df.columns.duplicated()].tolist()
+            if duplicated_columns:
+                st.error(f"중복된 컬럼명이 있습니다: {duplicated_columns}. 다른 이름으로 변경해주세요")
+            else:
+                st.data_editor(st.session_state.df,
+                               num_rows='dynamic',
+                               hide_index=True,
+                               use_container_width=True,
+                               height=667,
+                               key=f'change_df_data')
     return bodycol2
 
 
