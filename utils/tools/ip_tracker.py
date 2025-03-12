@@ -33,7 +33,7 @@ def log_visitor():
     # Get client information
     ip_address = get_remote_ip()
 
-    if ip_address not in ["127.0.0.1", "172.17.146.217", "172.17.173.18"]:
+    if ip_address not in ["127.0.0.1", "172.17.146.217", "172.17.173.18", "172.17.17.85"]:
         visitor_info = {
             "timestamp": datetime.now().isoformat(),
             "ip_address": ip_address,
