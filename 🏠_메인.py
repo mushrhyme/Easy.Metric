@@ -61,17 +61,8 @@ def initialize_session_state():
         "diag_df": pd.DataFrame(),
         "anov_df": pd.DataFrame(),
         "factor_df": pd.DataFrame(),
-        # doe
-        "design": pd.DataFrame(),
-        "num_factors": 2,
-        "center_points": 0,
-        "replicates": 1,
-        "blocks": 1,
-        "fraction": "full",
-        "whole_plot_factors": 1,
-        "whole_plot_replicates": 2,
-        "subplot_replicates": 1,
-        "use_blocks": False,
+        "lsl": 0.0,
+        "usl": 0.0,
         # gage r&r
         "part": None,
         "operator": None,
@@ -140,7 +131,7 @@ def main():
     #draw banner img
     # st.image('utils/image/banner.png', width=950)
     # create columns for banner and text
-    col1, col2 = st.columns([3, 1])  # 2:1 비율로 공간 분할
+    col1, col2 = st.columns([0.758, 0.242])
 
     # 첫 번째 컬럼에 이미지
     with col1:
