@@ -9,6 +9,7 @@ from pathlib import Path
 
 # 페이지 설정
 st.set_page_config(
+    layout="wide",
     page_title="시스템 관리",
     page_icon="🔧",
     initial_sidebar_state="expanded"
@@ -90,6 +91,7 @@ def load_recent_error():
     except Exception as e:
         st.warning(f"에러 로그 읽기 실패: {str(e)}")
         return None
+
 def display_qa_form():
     """일반 사용자를 위한 Q&A 폼"""
     st.title("❓ 문의사항 등록")
@@ -614,23 +616,6 @@ def display_visitor_stats(df):
         else:
             st.metric("일평균 방문", avg_daily_visits)
 
-    # 시간대별 방문자 수 차트
-    st.subheader("📊 시간대별 방문자 수")
-    hourly_visits = df.groupby(df['timestamp'].dt.hour)['ip_address'].count()
-
-    # 없는 시간대 0으로 채우기
-    all_hours = pd.Series(0, index=range(24))
-    hourly_visits = hourly_visits.add(all_hours, fill_value=0)
-
-    fig_hourly = px.bar(
-        x=hourly_visits.index,
-        y=hourly_visits.values,
-        labels={'x': '시간', 'y': '방문자 수'},
-        title='시간대별 방문자 분포'
-    )
-    fig_hourly.update_xaxes(ticktext=[f"{i}시" for i in range(24)], tickvals=list(range(24)))
-    st.plotly_chart(fig_hourly)
-
     # 일별 방문자 수 추이
     st.subheader("📈 일별 방문자 추이")
     daily_visits = df.groupby(df['timestamp'].dt.date).agg({
@@ -665,6 +650,23 @@ def display_visitor_stats(df):
         )
     )
     st.plotly_chart(fig_daily)
+
+    # 시간대별 방문자 수 차트
+    st.subheader("📊 시간대별 방문자 수")
+    hourly_visits = df.groupby(df['timestamp'].dt.hour)['ip_address'].count()
+
+    # 없는 시간대 0으로 채우기
+    all_hours = pd.Series(0, index=range(24))
+    hourly_visits = hourly_visits.add(all_hours, fill_value=0)
+
+    fig_hourly = px.bar(
+        x=hourly_visits.index,
+        y=hourly_visits.values,
+        labels={'x': '시간', 'y': '방문자 수'},
+        title='시간대별 방문자 분포'
+    )
+    fig_hourly.update_xaxes(ticktext=[f"{i}시" for i in range(24)], tickvals=list(range(24)))
+    st.plotly_chart(fig_hourly)
 
     # IP 주소별 방문 횟수
     st.subheader("🔍 자주 방문한 IP")
