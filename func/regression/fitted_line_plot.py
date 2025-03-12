@@ -115,16 +115,18 @@ def fitted_line_plot_set():
     predictor.remove(st.session_state.target)
     st.session_state.predictor = st.selectbox("예측변수", predictor)
 
-    # 반응: 계량형 변수 확인
-    if df[st.session_state.target].dtype=="object":
-        st.error(f"{st.session_state.target}는 계량형 변수가 아닙니다. 계량형 변수만 선택해주세요.")
-        return
+    if st.session_state.predictor is None:
+        st.error("예측변수를 선택해주세요")
     else:
-        # 요인: 계량형 변수 확인
-        if df[st.session_state.predictor].dtype=="object":
-            st.error(f"{st.session_state.predictor}는 계량형 변수가 아닙니다. 계량형 변수만 선택해주세요.")
+        # 반응: 계량형 변수 확인
+        if df[st.session_state.target].dtype=="object":
+            st.error(f"{st.session_state.target}는 계량형 변수가 아닙니다. 계량형 변수만 선택해주세요.")
             return
-    
+        else:
+            if df[st.session_state.predictor].dtype=="object":
+                st.error(f"{st.session_state.predictor}는 계량형 변수가 아닙니다. 계량형 변수만 선택해주세요.")
+                return
+
     st.session_state.degree = int(st.radio("회귀 모형 유형", ["1차", "2차"])[0])
     predictor = st.session_state.predictor
     st.session_state.interactions = [":".join([predictor] * i) for i in range(2, st.session_state.degree + 1)]
@@ -150,7 +152,10 @@ def fitted_line_plot_plot(df):
 def fitted_line_plot_run():  
     df = convert_to_calculatable_df()
     # --------------------------------------
-    try:
+
+    if len(df[st.session_state.target].dropna(axis=0, how="all"))==0 or len(df[st.session_state.predictor].dropna(axis=0, how="all"))==0:
+        st.error("분석에 사용할 데이터가 없습니다. 올바른 변수를 선택해주세요.")
+    else:
         if len(df[st.session_state.target].dropna(axis=0, how="all"))==len(df[st.session_state.predictor].dropna(axis=0, how="all")):
             fitted_line_plot_cal(df)
             st.write("**회귀방정식**")
@@ -166,7 +171,3 @@ def fitted_line_plot_run():
                 fitted_line_plot_plot(df)
         else:
             st.error(f"{st.session_state.target}열과 {st.session_state.predictor}열의 길이는 동일해야 합니다.")
-    except KeyError:
-        st.error("예측 변수가 선택되지 않았거나 유효하지 않습니다. 예측 변수를 선택해주세요.")
-    except Exception as e:
-        st.error(f"오류가 발생했습니다: {str(e)}")

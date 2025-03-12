@@ -35,8 +35,9 @@ def interaction_analysis_set():
                 st.error(f"{', '.join(non_categorical)}는 범주형 변수가 아닙니다. 범주형 변수만 선택해주세요.")
                 return
     with tab2:
-        max_col = np.max([len(df[x].unique()) for x in st.session_state.predictor])
-        color_set([f"색상{i}" for i in range(1, max_col+1)])
+        if len(st.session_state.predictor) > 0:
+            max_col = np.max([len(df[x].unique()) for x in st.session_state.predictor])
+            color_set([f"색상{i}" for i in range(1, max_col+1)])
 
 def interaction_analysis_cal(df):
     pass
