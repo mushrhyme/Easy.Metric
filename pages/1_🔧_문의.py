@@ -210,7 +210,6 @@ def display_statistics(filtered_df):
 
     # 날짜만 추출 (시간 정보 제거)
     deduped_df['date'] = deduped_df['timestamp'].dt.date
-
     # 같은 날짜, 같은 사용자, 같은 traceback을 가진 에러를 하나로 처리
     deduped_df = deduped_df.drop_duplicates(subset=['date', 'user_id', 'traceback'])
 
@@ -346,7 +345,6 @@ def update_error_status(error_id, new_status, file_path='error_status.json'):
         st.error(f"상태 업데이트 중 오류 발생: {str(e)}")
         return False
 
-
 def display_error_tab_content(filtered_df, status_type):
     """각 탭의 내용을 표시하는 함수"""
     # 필터링된 데이터에서 해당 상태의 에러만 표시
@@ -356,99 +354,114 @@ def display_error_tab_content(filtered_df, status_type):
         st.info(f"필터링된 결과 중 {'미처리' if status_type == 'unhandled' else '처리된'} 에러가 없습니다.")
         return
 
-    # 전체 선택 체크박스
-    all_selected = st.checkbox(
-        "전체 선택",
-        key=f"all_select_{status_type}",
-        value=status_type == 'handled'
-    )
+    # 페이지네이션 설정
+    items_per_page = 5
+    total_pages = len(tab_df) // items_per_page + (1 if len(tab_df) % items_per_page > 0 else 0)
 
-    # 선택된 에러들을 저장할 세션 상태
-    if f'selected_errors_{status_type}' not in st.session_state:
-        st.session_state[f'selected_errors_{status_type}'] = set()
+    if total_pages > 0:
+        subcol1, subcol2 = st.columns([3, 7])
+        with subcol1:
+            page_number = st.number_input("페이지", min_value=1, max_value=total_pages, value=1, key=f"error_page_{status_type}")
 
-    # 전체 선택 시 모든 에러 선택
-    if all_selected:
-        st.session_state[f'selected_errors_{status_type}'] = set(tab_df['file_name'])
+        start_idx = (page_number - 1) * items_per_page
+        end_idx = min(start_idx + items_per_page, len(tab_df))
+        page_df = tab_df.iloc[start_idx:end_idx]
 
-    # 에러 목록 표시
-    for _, error in tab_df.iterrows():
-        col1, col2 = st.columns([0.1, 0.9])
+        # 전체 선택 체크박스
+        all_selected = st.checkbox(
+            "전체 선택",
+            key=f"all_select_{status_type}",
+            value=status_type == 'handled'
+        )
 
-        with col1:
-            # 체크박스 상태 설정
-            is_checked = st.checkbox(
-                "##",
-                key=f"check_{error['file_name']}",
-                value=error['file_name'] in st.session_state[
-                    f'selected_errors_{status_type}'] or status_type == 'handled'
-            )
+        # 선택된 에러들을 저장할 세션 상태
+        if f'selected_errors_{status_type}' not in st.session_state:
+            st.session_state[f'selected_errors_{status_type}'] = set()
 
-            # 체크박스 상태 저장
-            if is_checked:
-                st.session_state[f'selected_errors_{status_type}'].add(error['file_name'])
-            else:
-                st.session_state[f'selected_errors_{status_type}'].discard(error['file_name'])
+        # 전체 선택 시 모든 에러 선택
+        if all_selected:
+            st.session_state[f'selected_errors_{status_type}'] = set(page_df['file_name'])
+
+        # 에러 목록 표시
+        for _, error in page_df.iterrows():
+            col1, col2 = st.columns([0.1, 0.9])
+
+            with col1:
+                # 체크박스 상태 설정
+                is_checked = st.checkbox(
+                    "##",
+                    key=f"check_{error['file_name']}",
+                    value=error['file_name'] in st.session_state[
+                        f'selected_errors_{status_type}'] or status_type == 'handled'
+                )
+
+                # 체크박스 상태 저장
+                if is_checked:
+                    st.session_state[f'selected_errors_{status_type}'].add(error['file_name'])
+                else:
+                    st.session_state[f'selected_errors_{status_type}'].discard(error['file_name'])
+
+            with col2:
+                # 최근 업데이트된 항목 하이라이트
+                highlight_style = "background-color: #90EE90;" if error['recently_updated'] else ""
+
+                st.markdown(
+                    f"""
+                    <div style='{highlight_style}'>
+                        <strong>{error['timestamp'].strftime('%Y-%m-%d %H:%M:%S')}</strong> ({error['name']})<br>
+                        {error['error_message'][:50]}
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
+
+        # 선택된 에러 확인
+        selected_errors = st.session_state[f'selected_errors_{status_type}']
+
+        # 상태 업데이트를 위한 컬럼 생성
+        col1, col2, col3 = st.columns([2, 1, 2])
 
         with col2:
-            # 최근 업데이트된 항목 하이라이트
-            highlight_style = "background-color: #90EE90;" if error['recently_updated'] else ""
+            # 상태 업데이트 버튼
+            if st.button(
+                    "처리 완료로 변경" if status_type == 'unhandled' else "미처리로 변경",
+                    key=f"update_button_{status_type}",
+                    disabled=len(selected_errors) == 0  # 선택된 에러가 없으면 비활성화
+            ):
+                if not selected_errors:
+                    st.warning("선택된 에러가 없습니다.")
+                    return
 
-            st.markdown(
-                f"""
-                <div style='{highlight_style}'>
-                    <strong>{error['timestamp'].strftime('%Y-%m-%d %H:%M:%S')}</strong> ({error['name']})<br>
-                    {error['error_message'][:50]}
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
-            # 에러 메시지: {error['error_message']}
+                # 상태 업데이트
+                new_status = 'handled' if status_type == 'unhandled' else 'unhandled'
+                success = True
+                updated_count = 0
 
-    # 선택된 에러 확인
-    selected_errors = st.session_state[f'selected_errors_{status_type}']
+                for error_id in selected_errors:
+                    if update_error_status(error_id, new_status):
+                        updated_count += 1
+                    else:
+                        success = False
 
-    # 상태 업데이트를 위한 컬럼 생성
-    col1, col2, col3 = st.columns([2, 1, 2])
-
-    with col2:
-        # 상태 업데이트 버튼
-        if st.button(
-                "처리 완료로 변경" if status_type == 'unhandled' else "미처리로 변경",
-                key=f"update_button_{status_type}",
-                disabled=len(selected_errors) == 0  # 선택된 에러가 없으면 비활성화
-        ):
-            if not selected_errors:
-                st.warning("선택된 에러가 없습니다.")
-                return
-
-            # 상태 업데이트
-            new_status = 'handled' if status_type == 'unhandled' else 'unhandled'
-            success = True
-            updated_count = 0
-
-            for error_id in selected_errors:
-                if update_error_status(error_id, new_status):
-                    updated_count += 1
+                if success:
+                    st.success(f"{updated_count}개의 에러 상태가 변경되었습니다.")
+                    # 세션 상태 초기화
+                    st.session_state[f'selected_errors_{status_type}'] = set()
+                    # 상태 변경 완료 플래그 설정
+                    st.session_state.status_updated = True
+                    st.rerun()
                 else:
-                    success = False
+                    st.error("일부 에러 상태 변경에 실패했습니다.")
 
-            if success:
-                st.success(f"{updated_count}개의 에러 상태가 변경되었습니다.")
-                # 세션 상태 초기화
-                st.session_state[f'selected_errors_{status_type}'] = set()
-                # 상태 변경 완료 플래그 설정
-                st.session_state.status_updated = True
-                st.rerun()
-            else:
-                st.error("일부 에러 상태 변경에 실패했습니다.")
+
+
 def display_error_list(df):
     """상세 에러 목록을 표시하는 함수"""
     initialize_error_status()
     st.subheader("🔍 필터 옵션")
 
     # 날짜 필터
-    col1, col2 = st.columns(2)
+    col1, col2, col3 = st.columns([2, 4, 4])
     with col1:
         start_date = st.date_input(
             "시작 날짜",
@@ -456,7 +469,7 @@ def display_error_list(df):
             min_value=df['timestamp'].min().date(),
             max_value=df['timestamp'].max().date()
         )
-    with col2:
+
         end_date = st.date_input(
             "종료 날짜",
             value=df['timestamp'].max().date(),
@@ -464,72 +477,88 @@ def display_error_list(df):
             max_value=df['timestamp'].max().date()
         )
 
-    # 날짜로 필터링
-    mask = (df['timestamp'].dt.date >= start_date) & (df['timestamp'].dt.date <= end_date)
-    filtered_df = df[mask]
+        # 날짜로 필터링
+        mask = (df['timestamp'].dt.date >= start_date) & (df['timestamp'].dt.date <= end_date)
+        filtered_df = df[mask]
 
-    # 사용자 이름 검색
-    user_search = st.text_input("사용자 이름 검색", "")
-    if user_search:
-        filtered_df = filtered_df[filtered_df['name'].str.contains(user_search, case=False, na=False)]
+        # 사용자 이름 검색
+        user_search = st.text_input("사용자 이름 검색", "")
+        if user_search:
+            filtered_df = filtered_df[filtered_df['name'].str.contains(user_search, case=False, na=False)]
 
-    # 정렬 옵션
-    sort_options = {
-        '최신순': ('timestamp', False),
-        '오래된순': ('timestamp', True),
-        '사용자명순': ('name', True),
-        '에러타입순': ('error_type', True)
-    }
-    selected_sort = st.selectbox("정렬 기준", list(sort_options.keys()))
-    sort_column, ascending = sort_options[selected_sort]
-    filtered_df = filtered_df.sort_values(by=sort_column, ascending=ascending)
-    filtered_df['recently_updated'] = filtered_df['file_name'].apply(
-        lambda x: (datetime.now() - datetime.fromisoformat(
-            json.load(open('error_status.json', 'r'))
-            .get(x, {}).get('updated_at', '2000-01-01T00:00:00')
-        )).total_seconds() < 300  # 5분 이내 업데이트된 항목
-    )
+        # 정렬 옵션
+        sort_options = {
+            '최신순': ('timestamp', False),
+            '오래된순': ('timestamp', True),
+            '사용자명순': ('name', True),
+            '에러타입순': ('error_type', True)
+        }
+        selected_sort = st.selectbox("정렬 기준", list(sort_options.keys()))
+        sort_column, ascending = sort_options[selected_sort]
+        filtered_df = filtered_df.sort_values(by=sort_column, ascending=ascending)
+        filtered_df['recently_updated'] = filtered_df['file_name'].apply(
+            lambda x: (datetime.now() - datetime.fromisoformat(
+                json.load(open('error_status.json', 'r'))
+                .get(x, {}).get('updated_at', '2000-01-01T00:00:00')
+            )).total_seconds() < 300  # 5분 이내 업데이트된 항목
+        )
 
-    # 처리 상태 필터
-    selected_type = st.selectbox("처리 상태", ["전체", "미처리", "처리"])
-    if selected_type=="처리":
-        filtered_df = filtered_df[filtered_df['status'] == "handled"]
-    elif selected_type == "미처리":
-        filtered_df = filtered_df[filtered_df['status'] == "unhandled"]
+        # 처리 상태 필터
+        selected_type = st.selectbox("처리 상태", ["전체", "미처리", "처리"])
+        if selected_type=="처리":
+            filtered_df = filtered_df[filtered_df['status'] == "handled"]
+        elif selected_type == "미처리":
+            filtered_df = filtered_df[filtered_df['status'] == "unhandled"]
 
-    # 페이지네이션 설정
-    items_per_page = 10
-    total_pages = len(filtered_df) // items_per_page + (1 if len(filtered_df) % items_per_page > 0 else 0)
+    with col2:
+        # 페이지네이션 설정
+        items_per_page = 10
+        total_pages = len(filtered_df) // items_per_page + (1 if len(filtered_df) % items_per_page > 0 else 0)
 
-    if total_pages > 0:
-        col1, col2 = st.columns([7, 3])
-        with col1:
-            st.write(f"총 {len(filtered_df)}개의 항목")
-        with col2:
-            page_number = st.number_input("페이지", min_value=1, max_value=total_pages, value=1, key="error_page")
+        if total_pages > 0:
+            st.write(f"총 {len(filtered_df)}개 항목")
+            subcol1, subcol2 = st.columns([3, 7])
+            with subcol1:
+                page_number = st.number_input("페이지", min_value=1, max_value=total_pages, value=1, key="error_page")
 
-        start_idx = (page_number - 1) * items_per_page
-        end_idx = min(start_idx + items_per_page, len(filtered_df))
-        page_df = filtered_df.iloc[start_idx:end_idx]
-    else:
-        st.write("검색 결과가 없습니다.")
-        return
+            start_idx = (page_number - 1) * items_per_page
+            end_idx = min(start_idx + items_per_page, len(filtered_df))
+            filtered_df['date'] = filtered_df['timestamp'].dt.date
+            page_df = filtered_df.iloc[start_idx:end_idx].drop_duplicates(subset=['date', 'user_id', 'traceback'])
 
+        else:
+            st.write("검색 결과가 없습니다.")
+            return
+
+        # 에러 목록을 테이블로 먼저 보여주기
+        st.dataframe(
+            page_df[['timestamp', 'name', 'error_type', 'error_message', 'status']]
+            .rename(columns={
+                'timestamp': '발생시간',
+                'name': '사용자명',
+                'error_type': '에러유형',
+                'error_message': '에러메시지',
+                'status': '처리상태'
+            }),
+            width=1000,
+            hide_index=True
+        )
+
+    with col3:
+        # 에러 목록 탭 생성
+        unhandled_tab, handled_tab = st.tabs(["🔴 미처리 에러", "✅ 처리된 에러"])
+
+        # 미처리 에러 탭
+        with unhandled_tab:
+            unhandled_errors = filtered_df[filtered_df['status'] == 'unhandled']
+            display_error_tab_content(unhandled_errors, 'unhandled')
+
+        # 처리된 에러 탭
+        with handled_tab:
+            handled_errors = filtered_df[filtered_df['status'] == 'handled']
+            display_error_tab_content(handled_errors, 'handled')
     # 구분선 추가
     st.markdown("---")
-
-    # 에러 목록을 테이블로 먼저 보여주기
-    st.dataframe(
-        page_df[['timestamp', 'name', 'error_type', 'error_message', 'status']]
-        .rename(columns={
-            'timestamp': '발생시간',
-            'name': '사용자명',
-            'error_type': '에러유형',
-            'error_message': '에러메시지',
-            'status': '처리상태'
-        }),
-        hide_index=True
-    )
 
     # 선택된 에러의 상세 정보 표시
     selected_error = st.selectbox(
@@ -561,18 +590,7 @@ def display_error_list(df):
     if 'status_updated' not in st.session_state:
         st.session_state.status_updated = False
 
-    # 에러 목록 탭 생성
-    unhandled_tab, handled_tab = st.tabs(["🔴 미처리 에러", "✅ 처리된 에러"])
 
-    # 미처리 에러 탭
-    with unhandled_tab:
-        unhandled_errors = filtered_df[filtered_df['status'] == 'unhandled']
-        display_error_tab_content(unhandled_errors, 'unhandled')
-
-    # 처리된 에러 탭
-    with handled_tab:
-        handled_errors = filtered_df[filtered_df['status'] == 'handled']
-        display_error_tab_content(handled_errors, 'handled')
 
 def load_visitor_logs(file_path='visitor_logs.json'):
     """방문자 로그를 DataFrame으로 변환"""
