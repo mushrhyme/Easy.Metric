@@ -3,6 +3,36 @@ from st_on_hover_tabs import on_hover_tabs
 
 
 def apply_custom_css():
+    st.markdown("""
+        <style>
+            /* 기존 스타일 유지 + 가운데 정렬 추가 */
+            .logo-container {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                text-align: center;
+                margin-top: 30px;
+                padding: 0 20px; /* 좌우 여백 */
+            }
+
+            .logo-image {
+                width: 320px;
+                margin-bottom: 10px;
+                padding-right: 50px;
+            }
+
+            .main-header {
+                font-size: 2.5rem;
+                margin-bottom: 5px;
+            }
+
+            .sub-header {
+                font-size: 1.5rem;
+                color: #666666;
+            }
+        </style>
+        """, unsafe_allow_html=True)
     # 기존 버튼 스타일
     st.markdown("""
     <style>

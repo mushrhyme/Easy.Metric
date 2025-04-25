@@ -82,8 +82,8 @@ def menu(anlysis=None, plot=None, run=None):
         cal(anlysis, plot, run)
     if st.session_state['upload'].button('파일 업로드', use_container_width=True):
         upload_file()
-    if st.session_state['login'].button('로그인', use_container_width=True):
-        login()
+    # if st.session_state['login'].button('로그인', use_container_width=True):
+    #     login()
     if st.session_state['rename'].button('변경', use_container_width=True):
         rename_file()
 
@@ -251,49 +251,48 @@ def upload_file():
         st.success("데이터가 성공적으로 업로드되었습니다.")
         st.rerun()
 
-@st.dialog(title='Login')
-def login():
-    if st.session_state.id != '' and st.session_state.name != '':
-        st.warning('로그아웃 하시겠습니까?')
-        if st.button('Log Out', use_container_width=True):
-            st.session_state.id = ''
-            st.session_state.name = ''
 
-            with st.form(key='login_page'):
-                id_ = st.text_input('ID')
-                name = st.text_input('name')
-                submitted = st.form_submit_button('Submit')
-                if submitted:
-                    st.session_state.id = id_
-                    st.session_state.name = name
-                    st.rerun()
+def handle_login(name, userid):
+    with open('users.json', 'r', encoding='utf-8') as f:
+        users_db = json.load(f)
+    print(userid, userid in users_db)
+    if userid not in users_db:
+        st.session_state.login_error = '미등록 사용자입니다. 관리자에게 문의해주세요.'
     else:
-        with st.form(key='login_page'):
-            id_ = st.text_input('ID')
-            name = st.text_input('name')
-            submitted = st.form_submit_button('Submit')
+        if users_db[userid]['name'] == name:
+            st.session_state.logged_in = True
+            st.session_state.id = userid
+            st.session_state.name = name
 
-            if submitted:
-                # 사용자 데이터베이스 로드
-                with open('users.json', 'r', encoding='utf-8') as f:
-                    users_db = json.load(f)
+            folder = os.path.join(os.getcwd(), "DB", f"{userid}({name})")
+            if not os.path.exists(folder):
+                os.makedirs(folder)
+            st.rerun()  # 바로 로그인 반영
+        else:
+            st.session_state.login_error = '사번을 올바르게 입력해주세요.'
 
-                # 입력된 사용자 정보 확인
-                user_exists = False
-                for user in users_db.get('users', []):
-                    if user['id'] == id_ and user['name'] == name:
-                        user_exists = True
-                        break
 
-                if user_exists:
-                    st.session_state.id = id_
-                    st.session_state.name = name
-                    folder = os.path.join(os.getcwd(), "DB", f"{st.session_state.id}({st.session_state.name})")
-                    if not os.path.exists(folder):
-                        os.makedirs(folder)
-                    st.rerun()
-                else:
-                    st.error('미등록 사용자입니다. 관리자에게 문의해주세요.')
+def login():
+    st.markdown("""
+        <div class="logo-container">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Nongshim_Logo.svg"
+                alt="Nongshim Logo" class="logo-image">
+            <h1 class="main-header">Easy.Metric</h1>
+            <h2 class="sub-header">농심 통계 분석 시스템</h2>
+        </div>
+    """, unsafe_allow_html=True)
+
+    _, col2, _ = st.columns([1, 2, 1])
+    with col2:
+        name = st.text_input("아이디", key="login_name", placeholder="이름을 입력하세요")
+        userid = st.text_input("비밀번호", type="password", key="login_userid", placeholder="사번을 입력하세요")
+
+        if st.button("로그인", use_container_width=True):
+            handle_login(name, userid)
+
+        if st.session_state.login_error is not None:
+            st.error(st.session_state.login_error)
+
 
 def check_colname(colname, banned_word):
     for word in banned_word:
@@ -340,6 +339,24 @@ def table():
     return bodycol2
 
 
+def validate_numeric_column(df: pd.DataFrame, column_name: str) -> bool:
+    """
+    주어진 데이터프레임의 특정 열이 수치형인지 확인합니다.
+    
+    Parameters:
+    - df: pd.DataFrame - 확인할 데이터프레임
+    - column_name: str - 확인할 열 이름
+    
+    Returns:
+    - bool: 열이 수치형이면 True, 아니면 False
+    """
+    
+    if df[column_name].dtype in ['int64', 'float64']:
+        return True
+    else:
+        st.error(f"{column_name}는 수치형 변수가 아닙니다. 수치형 변수만 선택해주세요.")
+        return False
+        
 # def get_image_download_link(fig, filename="histogram.png", text="Download"):
 #     buf = BytesIO()
 #     fig.write_image(buf, format="png", scale=2, width=1000, height=600)
