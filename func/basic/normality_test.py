@@ -88,14 +88,17 @@ def normality_test_plot(df):
     st.plotly_chart(fig)
 
 def normality_test_run():  
-    df = convert_to_calculatable_df()[st.session_state.target]
-    # --------------------------------------
-    normality_test_cal(df)
-    st.write("**정규성 검정**")
-    st.write("귀무가설: 데이터가 정규 분포를 따릅니다.")
-    st.write("대립가설: 데이터가 정규 분포를 따르지 않습니다.")
-    st.write(f"유의수준: α={st.session_state.significance_level}")
-    st.data_editor(st.session_state.stats_df, key="stats", use_container_width=True)
-    # --------------------------------------
-    with st.container(border=True):
-        normality_test_plot(df)
+    df = convert_to_calculatable_df()
+    
+    if validate_numeric_column(df, st.session_state.target):
+        normality_test_cal(df[st.session_state.target])
+        st.write("**정규성 검정**")
+        st.write("귀무가설: 데이터가 정규 분포를 따릅니다.")
+        st.write("대립가설: 데이터가 정규 분포를 따르지 않습니다.")
+        st.write(f"유의수준: α={st.session_state.significance_level}")
+        st.data_editor(st.session_state.stats_df, key="stats", use_container_width=True)
+        # --------------------------------------
+        with st.container(border=True):
+            normality_test_plot(df[st.session_state.target])
+
+
