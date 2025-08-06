@@ -11,17 +11,20 @@ from utils.tools import (
     display_quality_tool)
 from error_handler import main_with_error_handling
 from utils.tools.ip_tracker import *
+
 def initialize_session_state():
     default_session = {
         'id': '',
         'name': '',
+        'login_error': None,
+        'logged_in': False,
         'DB': '',
         'number_of_columns': 15,
         'number_of_rows': 10000,
         'number_of_newClick': 0,
         "base_df": pd.DataFrame(),
         "correlation": None,
-        "color_1":None,
+        "color_1": None,
         "color_2": None,
         "color_3": None,
         "color_4": None,
@@ -99,8 +102,12 @@ def initialize_session_state():
 
 
 def create_menu_bar_placeholder():
-    menu_items = ['login', 'history', 'save', 'rename', 'Del', 'run', 'new', 'upload']
-    menu_widths = [1, 0.7, 0.7, 0.7, 0.7, 5.5, 1, 2]
+    menu_items = [
+         # 'login',
+        'history', 'save', 'rename', 'Del', 'run', 'new', 'upload']
+    menu_widths = [
+        # 1,
+        0.7, 0.7, 0.7, 0.7, 5.5, 1, 2]
     menu_cols = st.columns(menu_widths)
 
     for item, col in zip(menu_items, menu_cols):
@@ -120,15 +127,8 @@ def display_content(tabs):
     display_func = content_map.get(tabs)
     display_func()
 
-@main_with_error_handling
-def main():
-    # streamlit settings
-    st.set_page_config(layout="wide", page_title="Easy.Metric", page_icon=":bar_chart:")
-
-    # custom css apply
-    apply_custom_css()
-
-    #draw banner img
+def run():
+    # draw banner img
     # st.image('utils/image/banner.png', width=950)
     # create columns for banner and text
     col1, col2 = st.columns([0.758, 0.242])
@@ -140,20 +140,17 @@ def main():
     # 두 번째 컬럼에 텍스트
     with col2:
         st.markdown("""
-        <div style="background-color: #f8f9fa; 
-                    padding: 12px; 
-                    border-radius: 8px; 
-                    border-left: 5px solid #cc0000;
-                    margin-top: 15px;
-                    margin-bottom: 30px;
-                    font-size: 0.9em;"> 
-            <h4 style="color: #cc0000; margin-top: 0;font-size: 1.3em;">📋 Contact Information</h4>
-            <p style="margin-bottom: 3px; font-size: 1em;"><strong>[농심 DT추진팀] 조유민 주임 (7108)</strong></p>
-        </div>
-        """, unsafe_allow_html=True)
-
-    # initialize session state
-    initialize_session_state()
+            <div style="background-color: #f8f9fa;
+                        padding: 12px;
+                        border-radius: 8px;
+                        border-left: 5px solid #cc0000;
+                        margin-top: 15px;
+                        margin-bottom: 30px;
+                        font-size: 0.9em;">
+                <h4 style="color: #cc0000; margin-top: 0;font-size: 1.3em;">📋 Contact Information</h4>
+                <p style="margin-bottom: 3px; font-size: 1em;"><strong>[농심 DT추진팀] 조유민 주임 (7108)</strong></p>
+            </div>
+            """, unsafe_allow_html=True)
 
     # create sidebar
     tabs = create_sidebar()
@@ -168,6 +165,25 @@ def main():
     with section_set:
         display_content(tabs)
     log_visitor()
+
+@main_with_error_handling
+def main():
+    # streamlit settings
+    st.set_page_config(layout="wide", page_title="Easy.Metric", page_icon=":bar_chart:")
+
+    apply_custom_css()
+    initialize_session_state()
+
+    if st.session_state.get("logged_in", False):
+        # 로그인 상태가 변경되었을 때만 로그인 로그를 기록
+        if not st.session_state.get("login_logged", False):
+            log_login()
+            st.session_state.login_logged = True
+        run()
+    else:
+        st.session_state.login_logged = False  # 로그아웃 상태에서는 플래그 초기화
+        login()
+
 
 if __name__ == "__main__":
     main()
