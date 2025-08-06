@@ -36,8 +36,10 @@ def convert_to_calculatable_df():
 
 
 def update_table():
-    edited_data = st.session_state.change_df_data['edited_rows']
-    for row, v in edited_data.items():
+    change_df_data = st.session_state.get('change_df_data', {'edited_rows': {}})
+    edited_data = change_df_data.get('edited_rows', {})
+
+    for row, v in edited_data.items():  
         for col, val in v.items():
             st.session_state.df.loc[row, col] = val
 
@@ -105,7 +107,7 @@ def open_history():
             selected = st.radio('데이터를 선택해주세요:', filelist)
             st.caption(f'선택된 데이터: {selected}')
         if st.button('open', use_container_width=True):
-            # st.title('불러옵니다..')
+            # st.title('불러최니다..')
             if selected is None:
                 st.error("데이터를 먼저 저장해주세요.")
                 return
