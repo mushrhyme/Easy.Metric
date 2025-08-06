@@ -592,7 +592,7 @@ def display_error_list(df):
 
 
 
-def load_visitor_logs(file_path='visitor_logs.json'):
+def load_visitor_logs(file_path):
     """방문자 로그를 DataFrame으로 변환"""
     try:
         with open(file_path, 'r') as f:
@@ -905,11 +905,132 @@ def display_questions_dashboard():
             st.markdown(selected_row['title'])
             st.markdown("**문의내용:**")
             st.markdown(selected_row['content'])
+
+def load_login_logs(file_path='login_logs.json'):
+    """로그인 로그를 DataFrame으로 변환"""
+    try:
+        with open(file_path, 'r') as f:
+            logs = json.load(f)
+        df = pd.DataFrame(logs)
+        df['timestamp'] = pd.to_datetime(df['timestamp'])
+        return df
+    except Exception as e:
+        st.warning(f"로그인 로그 읽기 실패: {str(e)}")
+        return pd.DataFrame(columns=['timestamp', 'user_id', 'user_name', 'ip_address'])
+
+def display_login_stats(df):
+    """로그인 통계를 표시하는 함수"""
+    if df.empty:
+        st.info("로그인 로그가 없습니다.")
+        return
+
+    # 기본 통계
+    col1, col2, col3 = st.columns(3)
+
+    total_logins = len(df)
+    unique_users = df['user_id'].nunique()
+
+    # 일평균 로그인 수 계산
+    date_diff = (df['timestamp'].max() - df['timestamp'].min()).total_seconds() / 86400  # 일 단위로 변환
+    if date_diff < 1:  # 하루 미만인 경우
+        avg_daily_logins = total_logins
+    else:
+        avg_daily_logins = round(total_logins / date_diff, 1)
+
+    with col1:
+        st.metric("총 로그인 수", total_logins)
+    with col2:
+        st.metric("고유 사용자 수", unique_users)
+    with col3:
+        if date_diff < 1:
+            st.metric("오늘의 로그인", total_logins)
+        else:
+            st.metric("일평균 로그인", avg_daily_logins)
+
+    # 일별 로그인 추이
+    st.subheader("📈 일별 로그인 추이")
+    daily_logins = df.groupby(df['timestamp'].dt.date).agg({
+        'user_id': ['count', 'nunique']
+    }).reset_index()
+    daily_logins.columns = ['date', 'total_logins', 'unique_users']
+
+    fig_daily = px.line(
+        daily_logins,
+        x='date',
+        y=['total_logins', 'unique_users'],
+        labels={
+            'value': '로그인 수',
+            'date': '날짜',
+            'variable': '구분'
+        },
+        title='일별 로그인 추이'
+    )
+    fig_daily.for_each_trace(lambda t: t.update(
+        name={'total_logins': '총 로그인수', 'unique_users': '고유 사용자'}[t.name],
+        showlegend=True
+    ))
+    fig_daily.update_layout(
+        legend=dict(
+            title=None,
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="right",
+            x=1
+        )
+    )
+    st.plotly_chart(fig_daily)
+
+    # 시간대별 로그인 수 차트
+    st.subheader("📊 시간대별 로그인 수")
+    hourly_logins = df.groupby(df['timestamp'].dt.hour)['user_id'].count()
+
+    # 없는 시간대 0으로 채우기
+    all_hours = pd.Series(0, index=range(24))
+    hourly_logins = hourly_logins.add(all_hours, fill_value=0)
+
+    fig_hourly = px.bar(
+        x=hourly_logins.index,
+        y=hourly_logins.values,
+        labels={'x': '시간', 'y': '로그인 수'},
+        title='시간대별 로그인 분포'
+    )
+    fig_hourly.update_xaxes(ticktext=[f"{i}시" for i in range(24)], tickvals=list(range(24)))
+    st.plotly_chart(fig_hourly)
+
+    # 사용자별 로그인 횟수
+    st.subheader("🔍 자주 로그인한 사용자")
+    top_users = df.groupby(['user_id', 'user_name'])['timestamp'].count().reset_index()
+    top_users.columns = ['사용자 ID', '사용자명', '로그인 횟수']
+    top_users = top_users.sort_values('로그인 횟수', ascending=False)
+
+    fig_users = px.bar(
+        top_users,
+        x='사용자명',
+        y='로그인 횟수',
+        title='사용자별 로그인 횟수',
+        hover_data=['사용자 ID']
+    )
+    st.plotly_chart(fig_users)
+
+    # 로그인 기록 테이블
+    st.subheader("📋 상세 로그인 기록")
+    st.dataframe(
+        df.sort_values('timestamp', ascending=False)
+        .rename(columns={
+            'timestamp': '로그인 시간',
+            'user_id': '사용자 ID',
+            'user_name': '사용자명',
+            'ip_address': 'IP 주소'
+        }),
+        hide_index=True
+    )
+
 def display_error_dashboard():
     st.title("🔍 시스템 모니터링 대시보드")
 
     # 관리자 확인
-    if st.session_state.id != "9999999" or st.session_state.name != "shdtla1!":  # 관리자 ID 목록
+    if st.session_state.id != "9999999" or st.session_state.name != "admin":  # 관리자 ID 목록
         st.error("접근 권한이 없습니다.")
         return
     # 캐시 초기화 버튼
@@ -926,10 +1047,11 @@ def display_error_dashboard():
     # 데이터 로드
     error_df = load_error_logs()
     error_df['status'] = error_df['file_name'].apply(lambda x: get_error_status(x))
-    visitor_df = load_visitor_logs()
+    visitor_df = load_visitor_logs("./visitor_logs.json")
+    login_df = load_login_logs()
 
     # 탭 생성
-    tab1, tab2, tab3, tab4 = st.tabs(["📊 에러 통계", "📝 상세 에러 목록", "👥 방문자 분석", "💬 문의사항 관리"])
+    tab1, tab2, tab3, tab4, tab5 = st.tabs(["📊 에러 통계", "📝 상세 에러 목록", "👥 방문자 분석", "🔐 로그인 분석", "💬 문의사항 관리"])
 
     with tab1:
         display_statistics(error_df)
@@ -941,11 +1063,14 @@ def display_error_dashboard():
         display_visitor_stats(visitor_df)
 
     with tab4:
+        display_login_stats(login_df)
+
+    with tab5:
         display_questions_dashboard()
 
 def main():
     # 관리자 확인
-    is_admin = st.session_state.get('id') == '9999999' and st.session_state.get('name') == "shdtla1!"
+    is_admin = st.session_state.get('id') == '9999999' and st.session_state.get('name') == "admin"
 
     if is_admin:
         display_error_dashboard()
